@@ -80,12 +80,16 @@ const updateMyRestaurant = async (
     res.status(500).json({ message: "Something went wrong" });
   }
 };
-//get
-const getMyRestaurantOrders = async (req: Request, res: Response) => {
+
+const getMyRestaurantOrders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const restaurant = await Restaurant.findOne({ user: req.userId });
     if (!restaurant) {
-      return res.status(404).json({ message: "restaurant not found" });
+      res.status(404).json({ message: "restaurant not found" });
+      return;
     }
 
     const orders = await Order.find({ restaurant: restaurant._id })
@@ -99,22 +103,25 @@ const getMyRestaurantOrders = async (req: Request, res: Response) => {
   }
 };
 
-//update Order
-
-const updateOrderStatus = async (req: Request, res: Response) => {
+const updateOrderStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: "order not found" });
+      res.status(404).json({ message: "order not found" });
+      return;
     }
 
     const restaurant = await Restaurant.findById(order.restaurant);
 
     if (restaurant?.user?._id.toString() !== req.userId) {
-      return res.status(401).send();
+      res.status(401).send();
+      return;
     }
 
     order.status = status;
@@ -127,12 +134,9 @@ const updateOrderStatus = async (req: Request, res: Response) => {
   }
 };
 
-//upload image
-
-const uploadImage = async (file: Express.Multer.File) => {
-  const image = file;
-  const base64Image = Buffer.from(image.buffer).toString("base64");
-  const dataURI = `data:${image.mimetype};base64,${base64Image}`;
+const uploadImage = async (file: Express.Multer.File): Promise<string> => {
+  const base64Image = Buffer.from(file.buffer).toString("base64");
+  const dataURI = `data:${file.mimetype};base64,${base64Image}`;
 
   const uploadResponse = await cloudinary.v2.uploader.upload(dataURI);
   return uploadResponse.url;
