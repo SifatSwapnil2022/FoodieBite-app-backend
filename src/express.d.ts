@@ -1,10 +1,12 @@
-import "express";
+import { MulterFile } from "multer";
 
-declare global {
-  namespace Express {
-    interface Request {
-      file?: Multer.File;
-      files?: Multer.File[]; // If you're handling multiple file uploads
-    }
+declare namespace Express {
+  export interface Request {
+    file?: MulterFile; // Single file
+    files?: MulterFile[]; // Multiple files
+    user?: {
+      id: string;
+      email: string;
+    }; // Add custom properties
   }
 }
