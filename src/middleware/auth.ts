@@ -2,6 +2,7 @@ import { auth } from "express-oauth2-jwt-bearer";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
+import { promises } from "dns";
 
 declare global {
   namespace Express {
@@ -27,32 +28,28 @@ export const jwtParse = async (
 
   if (!authorization || !authorization.startsWith("Bearer ")) {
     res.sendStatus(401);
-    return; // Ensure the function exits after sending the response
+    return;
   }
 
+  // Bearer lshdflshdjkhvjkshdjkvh34h5k3h54jkh
   const token = authorization.split(" ")[1];
 
   try {
     const decoded = jwt.decode(token) as jwt.JwtPayload;
-    if (!decoded || !decoded.sub) {
-      res.sendStatus(401);
-      return; // Exit after sending the response
-    }
-
     const auth0Id = decoded.sub;
 
     const user = await User.findOne({ auth0Id });
 
     if (!user) {
       res.sendStatus(401);
-      return; // Exit after sending the response
+      return;
     }
 
     req.auth0Id = auth0Id as string;
     req.userId = user._id.toString();
-
-    next(); // Pass control to the next middleware
+    next();
   } catch (error) {
     res.sendStatus(401);
+    return;
   }
 };
