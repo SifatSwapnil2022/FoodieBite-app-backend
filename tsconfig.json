@@ -2,16 +2,16 @@
   "compilerOptions": {
     "outDir": "./dist",
     "module": "commonjs",
+    "target": "es2020", // Updated target version
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "target": "es2016",
     "baseUrl": "./",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"],
     "paths": {
       "*": ["node_modules/*"]
-    }
+    },
+    "strict": true // Enable strict type-checking options
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

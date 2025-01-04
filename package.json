@@ -7,9 +7,9 @@
     "dev": "nodemon src/index.ts",
     "install": "npm install --production=false",
     "prebuild": "npx tsc --version",
-    "build": "rm -rf dist && npx tsc",
+    "build": "rimraf dist && npx tsc",
     "start": "node dist/index.js",
-    "postinstall": "npm install --save-dev @types/node"
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [
     "food-ordering",
@@ -43,6 +43,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.5",
+    "rimraf": "^5.0.10",
     "typescript": "^5.7.2"
   }
 }
