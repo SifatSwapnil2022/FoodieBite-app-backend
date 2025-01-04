@@ -5,11 +5,11 @@
   "main": "./src/index.ts",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "install": "npm install --production=false",
-    "prebuild": "npx tsc --version",
-    "build": "rimraf dist && npx tsc",
+    "build": "rimraf dist && tsc",
     "start": "node dist/index.js",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "echo \"No tests specified\" && exit 0",
+    "install": "npm install --production=false",
+    "prebuild": "npx tsc --version"
   },
   "keywords": [
     "food-ordering",
