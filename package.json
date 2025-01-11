@@ -9,12 +9,7 @@
     "build": "npm install && npx tsc",
     "start": "node dist/index.js"
   },
-  "keywords": [
-    "food-ordering",
-    "backend",
-    "typescript",
-    "nodejs"
-  ],
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "engines": {
