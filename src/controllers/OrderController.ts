@@ -34,7 +34,6 @@ type CheckoutSessionRequest = {
   };
   restaurantId: string;
 };
-
 const stripeWebhookHandler = async (
   req: Request,
   res: Response
@@ -49,28 +48,49 @@ const stripeWebhookHandler = async (
       STRIPE_ENDPOINT_SECRET
     );
   } catch (error: any) {
-    console.log(error);
+    console.error("Webhook signature verification failed:", error.message);
     res.status(400).send(`Webhook error: ${error.message}`);
     return;
   }
 
-  if (event.type === "checkout.session.completed") {
-    const order = await Order.findById(event.data.object.metadata?.orderId);
+  // Handle event types
+  switch (event.type) {
+    case "checkout.session.completed":
+      const session = event.data.object;
+      console.log("Checkout session completed:", session);
+      // Add logic for order processing if needed
+      break;
 
-    if (!order) {
-      res.status(404).json({ message: "Order not found" });
-      return;
-    }
+    case "payment_intent.succeeded":
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const orderId = paymentIntent.metadata?.orderId; // Retrieve order ID from metadata
+      if (orderId) {
+        try {
+          const order = await Order.findById(orderId); // Find the order by ID
+          if (order) {
+            order.status = "paid"; // Update status to "paid"
+            order.totalAmount = paymentIntent.amount_received / 100; // Convert amount (assuming it's in cents)
+            await order.save(); // Save the updated order
+            console.log(`Order ${orderId} marked as paid`);
+          } else {
+            console.log(`Order ${orderId} not found`);
+          }
+        } catch (error) {
+          console.error(`Error updating order ${orderId}:`, error);
+        }
+      } else {
+        console.log("Order ID missing in payment metadata");
+      }
+      break;
 
-    order.totalAmount = event.data.object.amount_total;
-    order.status = "paid";
-
-    await order.save();
+    default:
+      console.warn(`Unhandled event type: ${event.type}`);
+      break;
   }
 
-  res.status(200).send();
+  // Send a response to acknowledge receipt of the event
+  res.status(200).send("Webhook received");
 };
-
 const createCheckoutSession = async (
   req: Request,
   res: Response
@@ -86,12 +106,25 @@ const createCheckoutSession = async (
       throw new Error("Restaurant not found");
     }
 
+    // Calculate total amount based on cartItems and deliveryPrice
+    const totalAmount =
+      checkoutSessionRequest.cartItems.reduce((total, item) => {
+        const menuItem = restaurant.menuItems.find(
+          (menuItem) => menuItem._id.toString() === item.menuItemId.toString()
+        );
+        if (menuItem) {
+          total += menuItem.price * parseInt(item.quantity);
+        }
+        return total;
+      }, 0) + restaurant.deliveryPrice;
+
     const newOrder = new Order({
       restaurant: restaurant,
       user: req.userId,
       status: "placed",
       deliveryDetails: checkoutSessionRequest.deliveryDetails,
       cartItems: checkoutSessionRequest.cartItems,
+      totalAmount: totalAmount, // Ensure totalAmount is calculated and set here
       createdAt: new Date(),
     });
 
@@ -172,7 +205,7 @@ const createSession = async (
     ],
     mode: "payment",
     metadata: {
-      orderId,
+      orderId, // Ensure orderId is passed in metadata
       restaurantId,
     },
     success_url: `${FRONTEND_URL}/order-status?success=true`,
